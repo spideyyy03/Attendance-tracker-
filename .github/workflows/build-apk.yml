@@ -1,32 +1,16 @@
-name: Build APK
-
-on:
-  push:
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.7'
-
-      - name: Unpack project
-        run: unzip -q AttendanceTrackerApk.zip
-
-      - name: Build release APK
-        working-directory: AttendanceTrackerApk
-        run: gradle assembleRelease --no-daemon
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: AttendanceTracker-APK
-          path: AttendanceTrackerApk/app/build/outputs/apk/release/*.apk
+      - name: Find and unpack project ZIP
+        run: |
+          ZIP_PATH=$(find . -type f -iname '*.zip' \
+            -not -path './.git/*' | head -n 1)
+          if [ -z "$ZIP_PATH" ]; then
+            echo "ERROR: No ZIP file found in repository"
+            exit 1
+          fi
+          echo "Using ZIP: $ZIP_PATH"
+          unzip -q "$ZIP_PATH"
+          echo "Extracted project folders:"
+          find . -maxdepth 3 -type f \
+            \( -name settings.gradle \
+            -o -name settings.gradle.kts \
+            -o -name build.gradle \
+            -o -name build.gradle.kts \) -print
